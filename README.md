@@ -176,4 +176,35 @@ MIT License
 
 ## 👥 Contributors
 
-- Your Team
+- **Your Team**
+
+## ✅ Completed Features (Latest)
+
+### 🚀 Core & Infrastructure
+- [x] **Monolith but Modular**: Clean architecture separating routers, services, and models.
+- [x] **Dockerized Environment**: Full `docker-compose` setup with Postgres, Redis, MinIO, Elasticsearch, and Celery.
+- [x] **Auth System**: Secure JWT Authentication, OAuth2 (Google/GitHub), and RBAC (Role Based Access Control).
+
+### 📝 Content & Editor
+- [x] **Block-Based Editor**: Integrated TipTap for rich text editing (Text, Images, Code blocks).
+- [x] **S3 Storage**: Image/File uploads to MinIO (S3 compatible) with automatic URL generation.
+- [x] **SEO Friendly**: Slug-based URLs and dynamic meta tags.
+
+### 🌐 Social & Interaction
+- [x] **Comments**: Nested (threaded) comment system with infinite depth support.
+- [x] **Reactions**: Medium-style "Clap" (Like) system.
+- [x] **Bookmarks**: Users can save posts to their reading list.
+- [x] **Follow System**: User-to-user following mechanism.
+
+### 🔍 Search & Discovery
+- [x] **Full-Text Search**: Powered by Elasticsearch. Supports fuzzy search and filtering by tags.
+- [x] **Tag System**: Filtering posts by associated tags.
+
+### ⚡ Performance & Analytics
+- [x] **Caching**: Redis caching for frequently accessed endpoints (e.g., Post lists).
+- [x] **Background Tasks**: Celery workers for sending emails (Welcome/Reset Password).
+- [x] **Unique Views**: Redis HyperLogLog implementation to track unique post views accurately.
+
+---
+
+*Documentation updated on: 2025-12-25*

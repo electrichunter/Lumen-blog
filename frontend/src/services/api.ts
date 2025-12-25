@@ -91,6 +91,79 @@ export interface FileUpload {
   filename: string;
 }
 
+// Comment Types
+export interface CommentAuthor {
+  id: string;
+  username: string;
+  full_name?: string;
+  avatar_url?: string;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  author: CommentAuthor;
+  post_id: string;
+  parent_id?: string;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+  reply_count: number;
+}
+
+export interface CommentCreate {
+  content: string;
+  parent_id?: string;
+}
+
+// Interaction Types
+export interface LikeResponse {
+  id: string;
+  post_id: string;
+  user_id: string;
+  clap_count: number;
+}
+
+export interface LikeCreate {
+  clap_count: number;
+}
+
+export interface PostLikeStats {
+  total_likes: number;
+  total_claps: number;
+  user_liked: boolean;
+  user_claps: number;
+}
+
+export interface BookmarkResponse {
+  id: string;
+  post_id: string;
+  user_id: string;
+  created_at: string;
+  post?: Post;
+}
+
+export interface BookmarkStatus {
+  is_bookmarked: boolean;
+}
+
+export interface FollowResponse {
+  id: string;
+  follower_id: string;
+  followed_id: string;
+  created_at: string;
+}
+
+export interface FollowStatus {
+  is_following: boolean;
+}
+
+export interface UserFollowStats {
+  followers_count: number;
+  following_count: number;
+  is_following: boolean;
+}
+
 // API Error Type
 export interface ApiError {
   detail: string;

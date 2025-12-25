@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 from pydantic import BaseModel, Field
+from app.schemas.post import PostListResponse
 
 
 # Comment Schemas
@@ -80,6 +81,7 @@ class BookmarkResponse(BaseModel):
     id: UUID
     post_id: UUID
     user_id: UUID
+    post: Optional[PostListResponse] = None
     created_at: datetime
 
     class Config:

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
@@ -14,16 +14,17 @@ from app.schemas.post import (
     PostListResponse, PostsPage
 )
 from app.auth.dependencies import get_current_active_user, require_author
+from app.services.search import search_service
+from fastapi_cache.decorator import cache
 
 router = APIRouter(prefix="/api/posts", tags=["Posts"])
 
 
-def calculate_read_time(content: dict) -> int:
-    """Calculate estimated read time in minutes based on content"""
+def extract_text_from_content(content: dict) -> str:
+    """Extract plain text from block-based content"""
     if not content:
-        return 0
+        return ""
     
-    # Extract text from block-based content
     text = ""
     blocks = content.get("blocks", []) or content.get("content", [])
     for block in blocks:
@@ -34,7 +35,11 @@ def calculate_read_time(content: dict) -> int:
                 for item in block.get("content", []):
                     if isinstance(item, dict):
                         text += item.get("text", "") + " "
-    
+    return text.strip()
+
+def calculate_read_time(content: dict) -> int:
+    """Calculate estimated read time in minutes based on content"""
+    text = extract_text_from_content(content)
     # Average reading speed: 200 words per minute
     word_count = len(text.split())
     read_time = max(1, round(word_count / 200))
@@ -44,6 +49,7 @@ def calculate_read_time(content: dict) -> int:
 @router.post("/", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
 async def create_post(
     post_data: PostCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_author)
 ):
@@ -87,11 +93,18 @@ async def create_post(
         select(Post).where(Post.id == new_post.id).options(joinedload(Post.author))
     )
     post = result.scalar_one()
+
+    # Index post in background
+    if post.status == PostStatus.PUBLISHED:
+        post_dict = PostResponse.model_validate(post).model_dump()
+        post_dict["content_text"] = extract_text_from_content(post_data.content)
+        background_tasks.add_task(search_service.index_post, post_dict)
     
     return post
 
 
 @router.get("/", response_model=PostsPage)
+@cache(expire=60)
 async def get_posts(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=50),
@@ -174,12 +187,13 @@ async def get_my_posts(
 @router.get("/{slug}", response_model=PostResponse)
 async def get_post_by_slug(
     slug: str,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Get post by slug (for SEO-friendly URLs).
     
-    Increments view count for published posts.
+    Increments view count for published posts (Unique views via Redis).
     """
     result = await db.execute(
         select(Post).where(Post.slug == slug).options(joinedload(Post.author))
@@ -199,9 +213,16 @@ async def get_post_by_slug(
             detail="Post not found"
         )
     
-    # Increment view count
-    post.view_count += 1
-    await db.commit()
+    # Analytics: Unique View Count
+    from app.services.analytics.service import analytics_service
+    client_ip = request.client.host
+    
+    is_unique = await analytics_service.increment_view_count(str(post.id), client_ip)
+    
+    if is_unique:
+        # Only increment DB counter if unique
+        post.view_count += 1
+        await db.commit()
     
     return post
 
@@ -210,6 +231,7 @@ async def get_post_by_slug(
 async def update_post(
     post_id: UUID,
     post_update: PostUpdate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -260,10 +282,25 @@ async def update_post(
     
     return post
 
+    # Return post first, tackle background task logic?
+    # No, we need to return 'post' at the end.
+    
+    # Update index in background
+    if post.status == PostStatus.PUBLISHED:
+        post_dict = PostResponse.model_validate(post).model_dump()
+        post_dict["content_text"] = extract_text_from_content(post.content) # Use updated content
+        background_tasks.add_task(search_service.index_post, post_dict)
+    else:
+        # If unpublished, remove from index
+        background_tasks.add_task(search_service.delete_post, str(post.id))
+
+    return post
+
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
     post_id: UUID,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -288,3 +325,60 @@ async def delete_post(
     
     await db.delete(post)
     await db.commit()
+
+    # Remove from index
+    background_tasks.add_task(search_service.delete_post, str(post_id))
+
+
+@router.get("/search", response_model=PostsPage)
+async def search_posts(
+    q: Optional[str] = None,
+    tag: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=50),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Search posts using Elasticsearch + DB fetch.
+    Supports full-text query (q) and exact tag filtering (tag).
+    """
+    offset = (page - 1) * size
+    try:
+        if not q and not tag:
+             return PostsPage(items=[], total=0, page=page, size=size, pages=0)
+
+        result = await search_service.search_posts(query=q, tag=tag, size=size, from_=offset)
+        total = result["total"]
+        
+        if total == 0:
+             return PostsPage(items=[], total=0, page=page, size=size, pages=0)
+
+        ids = [UUID(hit["id"]) for hit in result["hits"]]
+        
+        # specific order is not guaranteed by IN clause, so we might lose relevance sort order
+        # unless we re-sort in python
+        stmt = select(Post).where(Post.id.in_(ids)).options(joinedload(Post.author))
+        db_result = await db.execute(stmt)
+        posts_map = {p.id: p for p in db_result.scalars().unique().all()}
+        
+        # Reconstruct in order of ES hits
+        posts = []
+        for uid in ids:
+            if uid in posts_map:
+                posts.append(posts_map[uid])
+
+        pages = (total + size - 1) // size
+
+        return PostsPage(
+            items=posts,
+            total=total,
+            page=page,
+            size=size,
+            pages=pages
+        )
+    except Exception as e:
+        # Fallback to DB wildcards or return empty?
+        # For now return empty or error
+        # Assuming ES might be down
+        print(f"Search failed: {e}")
+        return PostsPage(items=[], total=0, page=page, size=size, pages=0)

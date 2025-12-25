@@ -145,6 +145,89 @@ class ApiClient {
         });
     }
 
+    async searchPosts(query: string, page = 1, size = 10, tag?: string): Promise<PostsPage> {
+        let url = `/api/posts/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`;
+        if (tag) {
+            url += `&tag=${encodeURIComponent(tag)}`;
+        }
+        return this.request<PostsPage>(url);
+    }
+
+    // Comments & Interactions
+    async getComments(postId: string, page = 1): Promise<import('./api').Comment[]> {
+        return this.request<import('./api').Comment[]>(`/api/posts/${postId}/comments?page=${page}`);
+    }
+
+    async getReplies(postId: string, commentId: string, page = 1): Promise<import('./api').Comment[]> {
+        return this.request<import('./api').Comment[]>(`/api/posts/${postId}/comments/${commentId}/replies?page=${page}`);
+    }
+
+    async createComment(postId: string, data: import('./api').CommentCreate): Promise<import('./api').Comment> {
+        return this.request<import('./api').Comment>(`/api/posts/${postId}/comments`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteComment(postId: string, commentId: string): Promise<void> {
+        return this.request<void>(`/api/posts/${postId}/comments/${commentId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async likePost(postId: string, claps = 1): Promise<import('./api').LikeResponse> {
+        return this.request<import('./api').LikeResponse>(`/api/posts/${postId}/like`, {
+            method: 'POST',
+            body: JSON.stringify({ clap_count: claps }),
+        });
+    }
+
+    async getPostLikes(postId: string): Promise<import('./api').PostLikeStats> {
+        return this.request<import('./api').PostLikeStats>(`/api/posts/${postId}/likes`);
+    }
+
+    // Bookmarks
+    async bookmarkPost(postId: string): Promise<import('./api').BookmarkResponse> {
+        return this.request<import('./api').BookmarkResponse>(`/api/posts/${postId}/bookmark`, {
+            method: 'POST'
+        });
+    }
+
+    async removeBookmark(postId: string): Promise<void> {
+        return this.request<void>(`/api/posts/${postId}/bookmark`, {
+            method: 'DELETE'
+        });
+    }
+
+    async checkBookmark(postId: string): Promise<import('./api').BookmarkStatus> {
+        return this.request<import('./api').BookmarkStatus>(`/api/posts/${postId}/bookmark`);
+    }
+
+    async getMyBookmarks(): Promise<import('./api').BookmarkResponse[]> {
+        return this.request<import('./api').BookmarkResponse[]>('/api/bookmarks');
+    }
+
+    // Follow
+    async followUser(userId: string): Promise<import('./api').FollowResponse> {
+        return this.request<import('./api').FollowResponse>(`/api/users/${userId}/follow`, {
+            method: 'POST'
+        });
+    }
+
+    async unfollowUser(userId: string): Promise<void> {
+        return this.request<void>(`/api/users/${userId}/follow`, {
+            method: 'DELETE'
+        });
+    }
+
+    async checkFollowStatus(userId: string): Promise<import('./api').FollowStatus> {
+        return this.request<import('./api').FollowStatus>(`/api/users/${userId}/follow`);
+    }
+
+    async getUserFollowStats(userId: string): Promise<import('./api').UserFollowStats> {
+        return this.request<import('./api').UserFollowStats>(`/api/users/${userId}/stats`);
+    }
+
     // Upload endpoints
     async uploadFile(file: File): Promise<FileUpload> {
         const formData = new FormData();
@@ -192,6 +275,35 @@ class ApiClient {
         }
 
         return response.json();
+    }
+
+    async uploadAudio(file: File): Promise<FileUpload> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const token = this.getToken();
+        const headers: HeadersInit = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/upload/audio`, {
+            method: 'POST',
+            headers,
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+            throw new Error(error.detail);
+        }
+
+        return response.json();
+    }
+
+    async uploadVideo(file: File): Promise<FileUpload> {
+        // Use generic upload for now as there is no specific /api/upload/video
+        return this.uploadFile(file);
     }
 }
 

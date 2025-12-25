@@ -1,8 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from redis import asyncio as aioredis
+from config import settings
 import uvicorn
 
-from app.routers import auth_router, users_router, posts_router, upload_router
+from app.routers import (
+    auth_router, users_router, posts_router, upload_router,
+    comments_router, interactions_router, follow_router
+)
 
 app = FastAPI(
     title="Lumen Blog API",
@@ -11,6 +18,16 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+@app.on_event("startup")
+async def startup_event():
+    # Initialize Search
+    from app.services.search import search_service
+    await search_service.initialize_index()
+    
+    # Initialize Cache
+    redis = aioredis.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix="lumen-cache")
 
 # CORS configuration
 app.add_middleware(
@@ -26,6 +43,9 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(posts_router)
 app.include_router(upload_router)
+app.include_router(comments_router)
+app.include_router(interactions_router)
+app.include_router(follow_router)
 
 
 @app.get("/")

@@ -202,6 +202,9 @@ async def get_my_bookmarks(
     result = await db.execute(
         select(Bookmark)
         .where(Bookmark.user_id == current_user.id)
+        .options(
+            joinedload(Bookmark.post).joinedload(Post.author)
+        )
         .order_by(Bookmark.created_at.desc())
     )
     bookmarks = result.scalars().all()

@@ -127,8 +127,20 @@ async def get_replies(
         .limit(size)
     )
     replies = result.scalars().unique().all()
+    
+    # Add reply counts
+    response = []
+    for reply in replies:
+        reply_count_result = await db.execute(
+            select(func.count(Comment.id)).where(Comment.parent_id == reply.id)
+        )
+        reply_count = reply_count_result.scalar()
 
-    return replies
+        reply_dict = CommentResponse.model_validate(reply).model_dump()
+        reply_dict["reply_count"] = reply_count
+        response.append(CommentResponse(**reply_dict))
+
+    return response
 
 
 @router.put("/{comment_id}", response_model=CommentResponse)

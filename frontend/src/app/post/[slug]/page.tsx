@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/services/client';
 import { Post } from '@/services/api';
+import Comments from '@/components/Comments';
+import FollowButton from '@/components/FollowButton';
 
 export default function PostDetailPage() {
     const params = useParams();
@@ -82,7 +84,8 @@ export default function PostDetailPage() {
                     return <p key={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">{text}</p>;
                 case 'heading':
                     const level = (block.level as number) || 2;
-                    const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const HeadingTag = `h${level}` as any;
                     return <HeadingTag key={index} className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">{text}</HeadingTag>;
                 case 'image':
                     return (
@@ -104,7 +107,8 @@ export default function PostDetailPage() {
                         </blockquote>
                     );
                 default:
-                    return <p key={index} className="mb-4 text-gray-700 dark:text-gray-300">{text || JSON.stringify(block)}</p>;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    return <p key={index} className="mb-4 text-gray-700 dark:text-gray-300">{text || JSON.stringify(block as any)}</p>;
             }
         });
     };
@@ -123,7 +127,10 @@ export default function PostDetailPage() {
                             )}
                         </div>
                         <div>
-                            <p className="font-medium">{post.author.full_name || post.author.username}</p>
+                            <p className="font-medium flex items-center space-x-2">
+                                <span>{post.author.full_name || post.author.username}</span>
+                                <FollowButton authorId={post.author.id} />
+                            </p>
                             <p className="text-violet-200 text-sm">{formattedDate} · {post.read_time} dk okuma</p>
                         </div>
                     </div>
@@ -165,6 +172,11 @@ export default function PostDetailPage() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Comments Section */}
+            <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+                <Comments postId={post.id} />
             </div>
         </article>
     );

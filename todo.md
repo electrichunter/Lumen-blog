@@ -46,11 +46,11 @@ Teknolojiler: FastAPI, Pydantic, JWT, OAuth2, Passlib
 
 [x] Dependency Injection ile get_current_user ve get_current_active_user.
 
-[ ] OAuth2 Entegrasyonu
+[x] OAuth2 Entegrasyonu
 
-[ ] Google Login entegrasyonu.
+[x] Google Login entegrasyonu.
 
-[ ] GitHub Login entegrasyonu.
+[x] GitHub Login entegrasyonu.
 
 [x] RBAC (Role Based Access Control)
 
@@ -96,17 +96,29 @@ Teknolojiler: Next.js 15 (App Router), TypeScript (TSX), TailwindCSS, TipTap/Edi
 
 [x] Block-Based Editör Entegrasyonu (En Kritik Kısım)
 
-[ ] TipTap kurulumu ve TypeScript entegrasyonu.
+[x] TipTap kurulumu ve TypeScript entegrasyonu.
+
+[x] Custom bloklar (Resim, Kod bloğu, Quote) geliştirilmesi.
+
+[x] İçeriğin JSON olarak kaydedilmesi ve Frontend'de render edilmesi.
 
 [x] Custom Image Block (.tsx): Sürükle-bırak yapıldığında Backend'e upload edip S3 URL'ini editöre gömen hook.
 
-[ ] Custom Audio/Video Block (.tsx): Ses dosyaları için özel oynatıcı bileşeni.
+[x] Custom Audio/Video Block (.tsx): Ses dosyaları için özel oynatıcı bileşeni.
 
 [x] İçeriğin JSON olarak kaydedilmesi ve tiplerin (interface) tanımlanması.
 
 [x] Sayfalar ve Bileşenler (TSX)
 
 [x] Ana Sayfa (page.tsx) - Trendler ve Son Yazılar (SSR).
+
+[x] Yan Menü/Navbar - Gelişmiş Navigasyon.
+
+[x] Frontend Sosyal Özellikleri (Tamamlandı)
+[x] Arama Sayfası (Search Page)
+[x] Yorum Sistemi (Comments)
+[x] Dashboard (Bookmarks & Stats)
+[x] Takip Sistemi (Follow Button)
 
 [x] Yazı Detay Sayfası ([slug]/page.tsx) - SEO uyumlu, Meta taglar dinamik.
 
@@ -120,39 +132,39 @@ Hedef: Kullanıcı etkileşimi, sosyal özellikler ve yüksek hız.
 
 💬 Backend: Sosyal Özellikler
 
-[ ] Yorum Sistemi
+[x] Yorum Sistemi
 
-[ ] Nested (İç içe) yorum yapısı (Self-referencing table).
+[x] Nested (İç içe) yorum yapısı (Self-referencing table).
 
-[ ] Yorumlar için Soft-Delete mekanizması.
+[x] Yorumlar için Soft-Delete mekanizması.
 
-[ ] Etkileşimler
+[x] Etkileşimler
 
-[ ] Beğeni (Clap/Like) sistemi (Redis Set yapısı ile unique sayım).
+[x] Beğeni (Clap/Like) sistemi (Redis Set yapısı ile unique sayım).
 
-[ ] Okuma listesine kaydetme (Bookmark).
+[x] Okuma listesine kaydetme (Bookmark).
 
-[ ] Takip etme (Follow) sistemi (User-to-User relation).
+[x] Takip etme (Follow) sistemi (User-to-User relation).
 
 🔍 Backend: Arama ve Keşfet
 
 Teknolojiler: Elasticsearch, Logstash/Custom Script
 
-[ ] Elasticsearch Entegrasyonu
+[x] Elasticsearch Entegrasyonu
 
-[ ] PostgreSQL verisini Elasticsearch'e senkronize eden bir servis/worker.
+[x] PostgreSQL verisini Elasticsearch'e senkronize eden bir servis/worker.
 
-[ ] Full-text search endpoint'i (Typos, fuzzy search destekli).
+[x] Full-text search endpoint'i (Typos, fuzzy search destekli).
 
-[ ] Kategori ve Etiket bazlı filtreleme.
+[x] Kategori ve Etiket bazlı filtreleme.
 
 ⚡ Performans ve Caching
 
 Teknolojiler: Redis
 
-[ ] Caching Stratejisi
+[x] Caching Stratejisi
 
-[ ] FastAPI-Cache veya custom decorator ile endpoint caching.
+[x] FastAPI-Cache veya custom decorator ile endpoint caching.
 
 [ ] Sık erişilen verilerin (Trendler) Redis'te tutulması.
 
@@ -162,9 +174,9 @@ Teknolojiler: Redis
 
 Teknolojiler: Celery, RabbitMQ/Redis Broker
 
-[ ] Celery Worker Kurulumu
+[x] Celery Worker Kurulumu
 
-[ ] E-posta gönderimi (Hoşgeldin, Şifre sıfırlama) - Asenkron.
+[x] E-posta gönderimi (Hoşgeldin, Şifre sıfırlama) - Asenkron.
 
 [ ] "Yazın beğenildi" bildirimi oluşturma.
 
@@ -192,7 +204,7 @@ Teknolojiler: Stripe API
 
 [ ] Yazar Paneli
 
-[ ] Görüntülenme sayıları (Redis HyperLogLog ile unique counter).
+[x] Görüntülenme sayıları (Redis HyperLogLog ile unique counter).
 
 [ ] Okuma süresi hesaplama algoritması.
 
