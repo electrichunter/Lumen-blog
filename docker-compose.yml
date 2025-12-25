@@ -1,4 +1,4 @@
-version: '3.8'
+ 
 
 services:
   # PostgreSQL Database
@@ -103,7 +103,6 @@ services:
       DATABASE_URL: postgresql://lumen_user:lumen_password@postgres:5432/lumen_blog
       REDIS_URL: redis://redis:6379
       S3_ENDPOINT: http://minio:9000
-      S3_ACCESS_KEY: minioadmin
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin
       ELASTICSEARCH_URL: http://elasticsearch:9200
