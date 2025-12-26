@@ -44,6 +44,14 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+
+class UserStats(BaseModel):
+    """Schema for user statistics"""
+    total_posts: int = 0
+    total_followers: int = 0
+    total_following: int = 0
+    total_likes: int = 0
+
 class UserInDB(UserResponse):
     """Schema for user with hashed password (internal use)"""
     hashed_password: Optional[str] = None

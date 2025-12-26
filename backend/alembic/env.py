@@ -12,7 +12,9 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from config import settings
 from app.database import Base
-from app.models.user import User  # Import all models here
+from app.models.user import User
+from app.models.post import Post, Tag, PostTag
+from app.models.social import Comment, Like, Bookmark, Follow
 
 # Alembic Config object
 config = context.config

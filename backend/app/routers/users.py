@@ -2,11 +2,13 @@ from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.schemas.user import UserResponse, UserUpdate
+from app.models.post import Post
+from app.models.social import Follow, Like
+from app.schemas.user import UserResponse, UserUpdate, UserStats
 from app.auth.dependencies import get_current_active_user, require_admin
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
@@ -44,6 +46,55 @@ async def get_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
         )
     
     return user
+
+
+@router.get("/{user_id}/stats", response_model=UserStats)
+async def get_user_stats(user_id: UUID, db: AsyncSession = Depends(get_db)):
+    """
+    Get user statistics (post count, followers, etc.)
+    """
+    # Verify user exists
+    result = await db.execute(select(User).where(User.id == user_id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Count posts
+    post_count_res = await db.execute(
+        select(func.count(Post.id)).where(Post.author_id == user_id, Post.status == "published")
+    )
+    total_posts = post_count_res.scalar() or 0
+
+    # Count followers
+    follower_count_res = await db.execute(
+        select(func.count(Follow.id)).where(Follow.followed_id == user_id)
+    )
+    total_followers = follower_count_res.scalar() or 0
+
+    # Count following
+    following_count_res = await db.execute(
+        select(func.count(Follow.id)).where(Follow.follower_id == user_id)
+    )
+    total_following = following_count_res.scalar() or 0
+    
+    # Count total likes on user's posts
+    # Join Like with Post to filter by Post.author_id
+    likes_count_res = await db.execute(
+        select(func.sum(Like.clap_count)) # Use clap_count for total claps, or count(id) for unique likes
+        .select_from(Like)
+        .join(Post, Like.post_id == Post.id)
+        .where(Post.author_id == user_id)
+    )
+    total_likes = likes_count_res.scalar() or 0
+
+    return UserStats(
+        total_posts=total_posts,
+        total_followers=total_followers,
+        total_following=total_following,
+        total_likes=total_likes
+    )
 
 
 @router.put("/me", response_model=UserResponse)

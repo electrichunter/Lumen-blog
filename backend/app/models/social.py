@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from app.database import Base
 
 
@@ -36,7 +36,7 @@ class Comment(Base):
     # Relationships
     author = relationship("User", backref="comments")
     post = relationship("Post", backref="comments")
-    replies = relationship("Comment", backref="parent", remote_side=[id], lazy="dynamic")
+    replies = relationship("Comment", backref=backref("parent", remote_side=[id]), lazy="selectin")
 
     def __repr__(self):
         return f"<Comment {self.id} by {self.author_id}>"

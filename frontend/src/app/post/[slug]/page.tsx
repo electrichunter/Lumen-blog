@@ -95,9 +95,9 @@ export default function PostDetailPage() {
                                 alt={block.caption as string || ''}
                                 className="w-full rounded-xl"
                             />
-                            {block.caption && (
+                            {block.caption ? (
                                 <figcaption className="text-center text-sm text-gray-500 mt-2">{block.caption as string}</figcaption>
-                            )}
+                            ) : null}
                         </figure>
                     );
                 case 'quote':
